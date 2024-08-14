@@ -10,6 +10,7 @@ import (
 	"image/draw"
 	"image/png"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 )
@@ -135,4 +136,14 @@ func resizeWatermark(watermark io.Reader, width uint) ([]byte, error) {
 	png.Encode(resized, m)
 
 	return resized.Bytes(), nil
+}
+
+// uploadFile uploads an image file to be used as a watermark for a QR code
+func uploadFile(file multipart.File) ([]byte, error) {
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, file); err != nil {
+		return nil, fmt.Errorf("could not upload file. %v", err)
+	}
+
+	return buf.Bytes(), nil
 }
