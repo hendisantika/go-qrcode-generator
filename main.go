@@ -10,6 +10,7 @@ import (
 	"image/draw"
 	"image/png"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -146,4 +147,18 @@ func uploadFile(file multipart.File) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// buildErrorResponse is a small utility function to simplify returning a JSON response
+// to be returned to the user when an error has occurred
+func buildErrorResponse(message string) []byte {
+	responseData := make(map[string]string)
+	responseData["error"] = message
+
+	response, err := json.Marshal(responseData)
+	if err != nil {
+		log.Fatalln("Could not generate error message.")
+	}
+
+	return response
 }
