@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"github.com/nfnt/resize"
 	"github.com/skip2/go-qrcode"
@@ -57,9 +58,18 @@ func handleRequest2(writer http.ResponseWriter, request *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/generate", handleRequest)
-	http.ListenAndServe(":8080", nil)
+	addr := flag.String("addr", ":8080", "HTTP network address")
+	flag.Parse()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/generate", handleRequest)
+
+	log.Printf("Starting server on %s", *addr)
 	fmt.Println("Listening on port 8080")
+	err := http.ListenAndServe(*addr, mux)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 type simpleQRCode struct {
