@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/skip2/go-qrcode"
+	"image"
+	"image/draw"
+	"image/png"
 	"net/http"
 	"strconv"
 )
@@ -81,4 +85,38 @@ func (code *simpleQRCode) GenerateWithWatermark(watermark []byte) ([]byte, error
 	}
 
 	return qrCode, nil
+}
+
+// addWatermark adds a watermark to a QR code, centered in the middle of the QR code
+func (code *simpleQRCode) addWatermark(qrCode []byte, watermarkData []byte, size int) ([]byte, error) {
+	qrCodeData, err := png.Decode(bytes.NewBuffer(qrCode))
+	if err != nil {
+		return nil, fmt.Errorf("could not decode QR code: %v", err)
+	}
+
+	watermarkImage, err := png.Decode(bytes.NewBuffer(watermarkData))
+	if err != nil {
+		return nil, fmt.Errorf("could not decode watermark: %v", err)
+	}
+
+	// Determine the offset to center the watermark on the QR code
+	offset := image.Pt((size/2)-32, (size/2)-32)
+
+	watermarkImageBounds := qrCodeData.Bounds()
+	m := image.NewRGBA(watermarkImageBounds)
+
+	// Center the watermark over the QR code
+	draw.Draw(m, watermarkImageBounds, qrCodeData, image.Point{}, draw.Src)
+	draw.Draw(
+		m,
+		watermarkImage.Bounds().Add(offset),
+		watermarkImage,
+		image.Point{},
+		draw.Over,
+	)
+
+	watermarkedQRCode := bytes.NewBuffer(nil)
+	png.Encode(watermarkedQRCode, m)
+
+	return watermarkedQRCode.Bytes(), nil
 }
