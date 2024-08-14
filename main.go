@@ -8,6 +8,9 @@ import (
 	"strconv"
 )
 
+const MAX_UPLOAD_SIZE = 1024 * 1024 // 1MB
+const WATERMARK_WIDTH = 64
+
 func handleRequest(writer http.ResponseWriter, request *http.Request) {
 	request.ParseMultipartForm(10 << 20)
 	var size, content = request.FormValue("size"), request.FormValue("content")
@@ -60,5 +63,22 @@ func (code *simpleQRCode) Generate() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not generate a QR code: %v", err)
 	}
+	return qrCode, nil
+}
+
+// GenerateWithWatermark generates a QR code using the value of simpleQRCode.Content
+// and adds a watermark to it, centered in the middle of the QR code, using the
+// supplied watermark image data
+func (code *simpleQRCode) GenerateWithWatermark(watermark []byte) ([]byte, error) {
+	qrCode, err := code.Generate()
+	if err != nil {
+		return nil, err
+	}
+
+	qrCode, err = code.addWatermark(qrCode, watermark, code.Size)
+	if err != nil {
+		return nil, fmt.Errorf("could not add watermark to QR code: %v", err)
+	}
+
 	return qrCode, nil
 }
