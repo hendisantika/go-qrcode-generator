@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/nfnt/resize"
 	"github.com/skip2/go-qrcode"
 	"image"
 	"image/draw"
 	"image/png"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -119,4 +121,18 @@ func (code *simpleQRCode) addWatermark(qrCode []byte, watermarkData []byte, size
 	png.Encode(watermarkedQRCode, m)
 
 	return watermarkedQRCode.Bytes(), nil
+}
+
+// resizeWatermark resizes a watermark image to the desired width and height
+func resizeWatermark(watermark io.Reader, width uint) ([]byte, error) {
+	decodedImage, err := png.Decode(watermark)
+	if err != nil {
+		return nil, fmt.Errorf("could not decode watermark image: %v", err)
+	}
+
+	m := resize.Resize(width, 0, decodedImage, resize.Lanczos3)
+	resized := bytes.NewBuffer(nil)
+	png.Encode(resized, m)
+
+	return resized.Bytes(), nil
 }
